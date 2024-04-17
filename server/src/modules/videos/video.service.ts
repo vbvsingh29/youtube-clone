@@ -5,7 +5,11 @@ export function createVideo({ owner }: { owner: string }) {
 }
 
 export function findVideo(videoId: Video["videoId"]) {
-  return VideoModel.findOne({ videoId });
+  try {
+    return VideoModel.findOne({ videoId });
+  } catch (e: any) {
+    throw e;
+  }
 }
 
 export function findVideos() {

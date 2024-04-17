@@ -19,7 +19,7 @@ export class Video {
   @prop({ unique: true, default: () => nanoid() })
   public videoId: string;
 
-  @prop({ unique: true })
+  @prop()
   public thumbnail: string;
 
   @prop({ enum: ["jpg", "jpeg", "png"] })
