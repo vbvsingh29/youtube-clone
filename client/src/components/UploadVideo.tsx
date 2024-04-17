@@ -9,13 +9,29 @@ import { useVideo } from "../../context/videos";
 
 function EditVideoForm({ videoId, onClose, videos }) {
   const { register, handleSubmit } = useForm();
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
+
   const onSubmit = async (data) => {
     try {
-      await updateVideo({ videoId, ...data });
+      await updateVideo({
+        videoId,
+        title: data.title,
+        description: data.description,
+        published: data.published,
+        thumbnail,
+      });
       onClose();
       videos();
     } catch (error) {
       console.error("Error updating video:", error);
+    }
+  };
+
+  const handleThumbnailChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setThumbnail(event.target.files[0]);
     }
   };
 
@@ -42,7 +58,20 @@ function EditVideoForm({ videoId, onClose, videos }) {
         <textarea
           id="description"
           {...register("description", { required: true })}
-          className="border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 block w-full text-gray-800"         />
+          className="border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 block w-full text-gray-800"
+        />
+      </div>
+      <div className="mb-4">
+        <label htmlFor="thumbnail" className="block font-medium text-gray-800">
+          Thumbnail
+        </label>
+        <input
+          type="file"
+          id="thumbnail"
+          {...register("thumbnail")}
+          onChange={handleThumbnailChange}
+          className="border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 block w-full text-gray-800"
+        />
       </div>
       <div className="mb-4">
         <label htmlFor="published" className="block font-medium text-gray-800">
