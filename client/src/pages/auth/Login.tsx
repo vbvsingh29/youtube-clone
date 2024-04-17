@@ -3,7 +3,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../../../api";
-import { toast, ToastContainer, Slide } from "react-toastify";
+import { toast, Slide } from "react-toastify";
 import { useMe } from "../../../context/me";
 
 type loginInput = {
@@ -111,16 +111,6 @@ const Login = () => {
           </button>
         </form>
       </div>
-      <ToastContainer
-        position="top-center"
-        hideProgressBar
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
     </div>
   );
 };

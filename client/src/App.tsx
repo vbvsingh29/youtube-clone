@@ -1,4 +1,7 @@
 import { Route, BrowserRouter, Routes } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import Footer from "./layout/Footer";
 import Home from "./pages/Home";
 import Header from "./layout/Header";
@@ -20,8 +23,18 @@ const App = () => (
           <Route path="/watch/:query" element={<WatchVideo />} />
         </Routes>
         <Footer />
+        <ToastContainer
+          position="top-center"
+          hideProgressBar
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
       </VideoContextProvider>
-    </MeContextProvider>``
+    </MeContextProvider>
   </BrowserRouter>
 );
 
