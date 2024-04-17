@@ -11,10 +11,12 @@ const Home = () => {
 
   return (
     <div className="text-3xl font-bold underline">
-      {videos &&
-        videos.map((video) => (
-          <VideoTeaser key={video.videoId} video={video} />
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {videos &&
+          videos.map((video) => (
+            <VideoTeaser key={video.videoId} video={video} />
+          ))}
+      </div>
     </div>
   );
 };
