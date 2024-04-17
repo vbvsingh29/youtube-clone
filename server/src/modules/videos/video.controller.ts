@@ -6,7 +6,8 @@ import { StatusCodes } from "http-status-codes";
 import { Video } from "./video.model";
 import { UpdateVideoBody, UpdateVideoParams } from "./video.schema";
 
-const MIME_TYPES = ["video/mp4"];
+const VIDEO_MIME_TYPES = ["video/mp4"];
+const IMG_MIME_TYPES = ["image/jpg", "image/jpeg", "image/png"];
 const CHUNK_SIZE_IN_BYTES = 1000000; //1mb
 
 function getPath({
@@ -19,6 +20,16 @@ function getPath({
   return `${process.cwd()}/videos/${videoId}.${extension}`;
 }
 
+function getImgPath({
+  thumbnail,
+  extension,
+}: {
+  thumbnail: Video["thumbnail"];
+  extension: Video["thumbnailExt"];
+}) {
+  return `${process.cwd()}/thumbnails/${thumbnail}.${extension}`;
+}
+
 export async function uploadVideoHandler(req: Request, res: Response) {
   try {
     const bb = busboy({ headers: req.headers });
@@ -27,7 +38,7 @@ export async function uploadVideoHandler(req: Request, res: Response) {
     const video = await createVideo({ owner: user._id });
 
     bb.on("file", async (_, file, info) => {
-      if (!MIME_TYPES.includes(info.mimeType)) {
+      if (!VIDEO_MIME_TYPES.includes(info.mimeType)) {
         return res.status(StatusCodes.BAD_REQUEST).send("Invalid File Type");
       }
       const extension = info.mimeType.split("/")[1];
@@ -64,10 +75,9 @@ export async function updateVideoHandler(
 ) {
   try {
     const { videoId } = req.params;
-    const { description, title, published } = req.body;
     const { _id: userId } = res.locals.user;
-    const video = await findVideo(videoId);
 
+    const video = await findVideo(videoId);
     if (!video) {
       return res.status(StatusCodes.NOT_FOUND).send("Video Not Found");
     }
@@ -76,15 +86,47 @@ export async function updateVideoHandler(
       return res.status(StatusCodes.UNAUTHORIZED).send("Unauthorized");
     }
 
-    video.title = title;
-    video.description = description;
-    video.published = published;
+    const bb = busboy({ headers: req.headers });
+    let thumbnail: string | null = null;
+    let thumbnailExt: string | null = null;
 
-    await video.save();
+    bb.on("file", async (_, file, info) => {
+      if (!IMG_MIME_TYPES.includes(info.mimeType)) {
+        return res.status(StatusCodes.BAD_REQUEST).send("Invalid File Type");
+      }
 
-    return res.status(StatusCodes.OK).send(video);
+      const extension = info.mimeType.split("/")[1];
+      const filePath = getImgPath({ thumbnail: videoId, extension });
+
+      thumbnail = `${videoId}.${extension}`;
+      thumbnailExt = extension;
+
+      const stream = fs.createWriteStream(filePath);
+      file.pipe(stream);
+    });
+
+    bb.on("field", (name, val, _) => {
+      if (name === "description") {
+        video.description = val;
+      } else if (name === "title") {
+        video.title = val;
+      } else if (name === "published") {
+        video.published = val === "true";
+      }
+    });
+
+    bb.on("finish", async () => {
+      if (thumbnail !== null && thumbnailExt !== null) {
+        video.thumbnail = thumbnail;
+        video.thumbnailExt = thumbnailExt;
+      }
+      await video.save();
+      return res.status(StatusCodes.OK).send(video);
+    });
+
+    req.pipe(bb);
   } catch (e: any) {
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(e.message);
   }
 }
 
