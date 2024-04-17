@@ -10,6 +10,7 @@ import Register from "./pages/auth/Register";
 import { MeContextProvider } from "../context/me";
 import { VideoContextProvider } from "../context/videos";
 import WatchVideo from "./pages/watch/WatchVideo";
+import About from "./pages/About";
 
 const App = () => (
   <BrowserRouter>
@@ -18,6 +19,7 @@ const App = () => (
         <Header />
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/" element={<About />} />
           <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/register" element={<Register />} />
           <Route path="/watch/:query" element={<WatchVideo />} />
