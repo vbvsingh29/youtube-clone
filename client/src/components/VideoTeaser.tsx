@@ -5,17 +5,17 @@ const VideoTeaser = ({ video }: { video: Video }) => {
   return (
     <Link
       to={`/watch/${video.videoId}`}
-      className="block mb-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition duration-300"
+      className="block bg-white rounded-lg shadow-lg hover:shadow-xl transition duration-300"
     >
       <div className="relative w-full pt-[56.25%] overflow-hidden">
         <img
           src={`http://localhost/youtube-clone/server/thumbnails/${video.thumbnail}.${video.thumbnailExt}`}
           alt={video.title}
-          className="absolute top-0 left-0 w-full h-48 object-cover"
+          className="absolute top-0 left-0 w-full h-full object-cover"
         />
         <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
           <svg
-            className="w-16 h-16 text-white"
+            className="w-12 h-12 text-white"
             fill="currentColor"
             viewBox="0 0 24 24"
           >
@@ -23,8 +23,8 @@ const VideoTeaser = ({ video }: { video: Video }) => {
           </svg>
         </div>
       </div>
-      <div className="p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">
+      <div className="p-3">
+        <h2 className="text-lg font-semibold text-gray-800 mb-1">
           {video.title}
         </h2>
         <p className="text-gray-600 line-clamp-2">{video.description}</p>
