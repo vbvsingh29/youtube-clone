@@ -21,24 +21,24 @@ const Header = () => {
             <Link to={"/"} className="hover:text-gray-400">
               Home
             </Link>
-            {/* <Link to={"/videos"} className="hover:text-gray-400">
-              Videos
+            <Link to={"/about"} className="hover:text-gray-400">
+              About
             </Link>
-            <Link to={"/channels"} className="hover:text-gray-400">
-              Channels
-            </Link>
-            <Link to={"/trending"} className="hover:text-gray-400">
-              Trending
-            </Link> */}
           </nav>
         </div>
         <div className="flex items-center gap-4">
           {!user && (
             <>
-              <Link to={"/auth/login"} className="px-4 py-2 rounded-md hover:bg-gray-800">
+              <Link
+                to={"/auth/login"}
+                className="px-4 py-2 rounded-md hover:bg-gray-800"
+              >
                 Login
               </Link>
-              <Link to={"/auth/register"} className="px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-600">
+              <Link
+                to={"/auth/register"}
+                className="px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-600"
+              >
                 Register
               </Link>
             </>

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { registerUser } from "../../../api";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { toast, ToastContainer, Slide } from "react-toastify";
+import { toast, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 type registerInput = {
@@ -186,16 +186,6 @@ const Register = () => {
           </button>
         </form>
       </div>
-      <ToastContainer
-        position="top-center"
-        hideProgressBar
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
     </div>
   );
 };

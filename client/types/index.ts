@@ -16,6 +16,8 @@ export interface Video {
   videoId: string;
   createdAt: Date;
   updatedAt: Date;
+  thumbnail: string;
+  thumbnailExt: string;
   __v: number;
   extension: string;
   description: string;
