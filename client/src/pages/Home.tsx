@@ -7,8 +7,8 @@ const Home = () => {
   const videos = useVideo();
 
   return (
-    <div className="text-3xl font-bold underline">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+    <div className="text-3xl font-bold underline mt-8 rounded-lg">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 rounded-lg ">
         {videos &&
           videos.map((video) => (
             <VideoTeaser key={video.videoId} video={video} />
