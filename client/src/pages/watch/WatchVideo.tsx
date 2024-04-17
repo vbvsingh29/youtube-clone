@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 
 const WatchVideo = () => {
   const { query } = useParams();
+  
   return (
     <div>
       <video
