@@ -1,4 +1,6 @@
+import { AxiosResponse } from "axios";
 import axiosInstance from "./axios.config";
+import { Video } from "../types";
 
 const userBase = "/api/users";
 const authBase = "/api/auth";
@@ -48,15 +50,31 @@ export function uploadVideo({
 
 export function updateVideo({
   videoId,
-  ...payload
+  title,
+  description,
+  published,
+  thumbnail,
 }: {
   videoId: string;
   title: string;
   description: string;
   published: boolean;
-}) {
-  return axiosInstance.patch(`${videoBase}/${videoId}`, payload, {
+  thumbnail?: File;
+}): Promise<AxiosResponse<Video>> {
+  const formData = new FormData();
+  formData.append("title", title);
+  formData.append("description", description);
+  formData.append("published", published.toString());
+
+  if (thumbnail) {
+    formData.append("thumbnail", thumbnail);
+  }
+
+  return axiosInstance.patch(`${videoBase}/${videoId}`, formData, {
     withCredentials: true,
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
 }
 
