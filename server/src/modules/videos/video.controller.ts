@@ -98,7 +98,7 @@ export async function updateVideoHandler(
       const extension = info.mimeType.split("/")[1];
       const filePath = getImgPath({ thumbnail: videoId, extension });
 
-      thumbnail = `${videoId}.${extension}`;
+      thumbnail = `${videoId}`;
       thumbnailExt = extension;
 
       const stream = fs.createWriteStream(filePath);
