@@ -2,7 +2,7 @@ import { prop, getModelForClass, Ref } from "@typegoose/typegoose";
 import { User } from "../user/user.model";
 import { customAlphabet } from "nanoid";
 
-const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789",10);
+const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 10);
 export class Video {
   @prop()
   public title: string;
@@ -18,6 +18,12 @@ export class Video {
 
   @prop({ unique: true, default: () => nanoid() })
   public videoId: string;
+
+  @prop({ unique: true })
+  public thumbnail: string;
+
+  @prop({ enum: ["jpg", "jpeg", "png"] })
+  public thumbnailExt: string;
 
   @prop({ default: false })
   public published: boolean;

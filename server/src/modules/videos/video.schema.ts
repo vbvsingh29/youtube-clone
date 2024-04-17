@@ -5,6 +5,7 @@ export const updateVideoSchema = {
     title: string(),
     description: string(),
     published: boolean(),
+    thumbnail: string(),
   }),
   params: object({
     videoId: string(),
