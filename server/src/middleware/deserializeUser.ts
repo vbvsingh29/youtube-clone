@@ -7,7 +7,7 @@ function deserializeUser(req: Request, res: Response, next: NextFunction) {
     req.cookies.accessToken ||
     ""
   ).replace(/^Bearer\s/, "");
-console.log(accessToken,"a")
+
   if (!accessToken) {
     return next();
   }
