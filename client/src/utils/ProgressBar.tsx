@@ -1,4 +1,4 @@
-const Progress_Bar = ({ progressPercentage }) => {
+const ProgressBar = ({ progressPercentage }) => {
   return (
     <div className="h-5 w-full bg-gray-300">
       <div
@@ -11,4 +11,4 @@ const Progress_Bar = ({ progressPercentage }) => {
   );
 };
 
-export default Progress_Bar;
+export default ProgressBar;
