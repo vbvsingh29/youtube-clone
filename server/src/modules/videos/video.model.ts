@@ -22,6 +22,9 @@ export class Video {
   @prop()
   public thumbnail: string;
 
+  @prop({ unique: true })
+  public s3Key: string;
+
   @prop({ enum: ["jpg", "jpeg", "png"] })
   public thumbnailExt: string;
 

@@ -1,8 +1,8 @@
-import axios from 'axios';
-import "dotenv/config";
+import axios from "axios";
+import { API_ENDPOINT } from "../src/utils/constants";
 
 const axiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_API_ENDPOINT,
+  baseURL: API_ENDPOINT,
 });
 
 export default axiosInstance;
