@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { API_ENDPOINT } from "../../utils/constants";
 
 const WatchVideo = () => {
   const { query } = useParams();
@@ -7,7 +8,7 @@ const WatchVideo = () => {
     <div>
       <video
         className="h-full w-full rounded-lg"
-        src={`${process.env.REACT_APP_API_ENDPOINT}/api/videos/${query}`}
+        src={`${API_ENDPOINT}/api/videos/${query}`}
         width="800-px"
         height="auto"
         controls
