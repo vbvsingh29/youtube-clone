@@ -1,7 +1,14 @@
 import { Link } from "react-router-dom";
 import { Video } from "../../types";
+import s3 from "../../aws/aws.config";
+import { AWS_BUCKET_NAME } from "../utils/constants";
 
 const VideoTeaser = ({ video }: { video: Video }) => {
+  const url = s3.getSignedUrl("getObject", {
+    Bucket: AWS_BUCKET_NAME,
+    Key: `thumbnails/${video.thumbnail}.${video.thumbnailExt}`,
+    // Expires: signedUrlExpireSeconds
+  });
   return (
     <Link
       to={`/watch/${video.videoId}`}
@@ -9,7 +16,7 @@ const VideoTeaser = ({ video }: { video: Video }) => {
     >
       <div className="relative w-full pt-[56.25%] overflow-hidden">
         <img
-          src={`http://localhost/youtube-clone/server/thumbnails/${video.thumbnail}.${video.thumbnailExt}`}
+          src={url}
           alt={video.title}
           className="absolute top-0 left-0 w-full h-full object-cover"
         />
