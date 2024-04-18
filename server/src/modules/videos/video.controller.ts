@@ -111,13 +111,30 @@ export async function updateVideoHandler(
       }
 
       const extension = info.mimeType.split("/")[1];
-      const filePath = getImgPath({ thumbnail: videoId, extension });
+      const fileName = `${video.videoId}.${extension}`;
+      const folderName = "thumbnails";
+
+      const params: aws.S3.PutObjectRequest = {
+        Bucket: AWS_BUCKET_NAME || "default",
+        Key: `${folderName}/${fileName}`,
+        Body: file,
+        ContentType: info.mimeType,
+      };
 
       thumbnail = `${videoId}`;
       thumbnailExt = extension;
 
-      const stream = fs.createWriteStream(filePath);
-      file.pipe(stream);
+      try {
+        await s3.upload(params).promise();
+        thumbnail = `${videoId}`;
+        thumbnailExt = extension;
+        await video.save();
+      } catch (e) {
+        console.error("Error uploading thumbnail to S3:", e);
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .send("Error uploading video");
+      }
     });
 
     bb.on("field", (name, val, _) => {
