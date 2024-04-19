@@ -14,24 +14,24 @@ export async function loginHandler(
   const { email, password } = req.body;
   try {
     const user = await findUserByEmail(email);
-
     if (!user || !user.comparePassword(password)) {
       return res
         .status(StatusCodes.UNAUTHORIZED)
         .send("Invalid Email or Password");
     }
     const payload = omit((user as UserDocument).toJSON(), ["password", "__v"]);
-
     const jwt = signJwt(payload);
-    console.log(CORS_ORIGIN, "COOKIE");
+    const renderDomain = "https://youtube-clone-4iws.onrender.com";
+    console.log(renderDomain, "DOMAIN");
     res.cookie("accessToken", jwt, {
       maxAge: 3.154e10, // 1 year
       httpOnly: true,
-      domain: CORS_ORIGIN,
+      domain: renderDomain,
       path: "/",
-      sameSite: "strict",
+      sameSite: "none",
       secure: true,
     });
+
     return res.status(StatusCodes.OK).send(jwt);
   } catch (e: any) {}
 }
