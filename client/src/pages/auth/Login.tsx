@@ -26,6 +26,10 @@ const Login = () => {
     try {
       const user = await login(data);
       console.log(user, "USER DETAILS");
+      if (user) {
+        console.log("cookie");
+        document.cookie = `accessToken=${user.accessToken}; max-age=31540000; path=/; secure; SameSite=None`;
+      }
       setUser(user);
       navigate("/");
     } catch (error) {
