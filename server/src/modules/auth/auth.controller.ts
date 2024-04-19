@@ -22,11 +22,11 @@ export async function loginHandler(
     const payload = omit((user as UserDocument).toJSON(), ["password", "__v"]);
     const jwt = signJwt(payload);
     const renderDomain = "https://youtube-clone-4iws.onrender.com";
-    console.log(renderDomain, "DOMAIN");
+    console.log(renderDomain, "DOMAIN", CORS_ORIGIN);
     res.cookie("accessToken", jwt, {
       maxAge: 3.154e10, // 1 year
       httpOnly: true,
-      domain: renderDomain,
+      domain: CORS_ORIGIN,
       path: "/",
       sameSite: "none",
       secure: true,
