@@ -28,7 +28,7 @@ const Login = () => {
       console.log(user, "USER DETAILS");
       if (user) {
         console.log("cookie");
-        document.cookie = `accessToken=${user.accessToken}; max-age=31540000; path=/; secure; SameSite=None`;
+        document.cookie = `accessToken=${user}; max-age=31540000; path=/; secure; SameSite=None`;
       }
       setUser(user);
       navigate("/");
