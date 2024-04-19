@@ -5,6 +5,7 @@ import { signJwt } from "./auth.utils";
 import omit from "../../helpers/omit";
 import { LoginBody } from "./auth.schema";
 import { UserDocument } from "../user/user.model";
+import { CORS_ORIGIN } from "../../utils/constants";
 
 export async function loginHandler(
   req: Request<{}, {}, LoginBody>,
@@ -26,10 +27,10 @@ export async function loginHandler(
     res.cookie("accessToken", jwt, {
       maxAge: 3.154e10, // 1 year
       httpOnly: true,
-      domain: "localhost",
+      domain: CORS_ORIGIN,
       path: "/",
       sameSite: "strict",
-      secure: false,
+      secure: true,
     });
     return res.status(StatusCodes.OK).send(jwt);
   } catch (e: any) {}
