@@ -4,8 +4,9 @@ import s3 from "../../aws/aws.config";
 import { AWS_BUCKET_NAME } from "../utils/constants";
 
 const VideoTeaser = ({ video }: { video: Video }) => {
+  console.log(AWS_BUCKET_NAME, "Bucket");
   const url = s3.getSignedUrl("getObject", {
-    Bucket: AWS_BUCKET_NAME,
+    Bucket: AWS_BUCKET_NAME || "",
     Key: `thumbnails/${video.thumbnail}.${video.thumbnailExt}`,
     // Expires: signedUrlExpireSeconds
   });
