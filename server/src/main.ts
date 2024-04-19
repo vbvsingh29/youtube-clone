@@ -28,6 +28,7 @@ app.use(
 );
 
 app.use((req, res, next) => {
+  const origin = CORS_ORIGIN || 'https://youtube-clone-1-zebi.onrender.com';
   res.setHeader("Access-Control-Allow-Origin", CORS_ORIGIN || "");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader(
