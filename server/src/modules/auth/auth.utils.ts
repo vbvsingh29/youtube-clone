@@ -11,6 +11,7 @@ export function signJwt(payload: string | Buffer | object) {
 }
 
 export function verifyJwt(token: string) {
+  console.log("verifying token");
   try {
     const decoded = jwt.verify(token, jwt_secret as string);
     return decoded;
