@@ -23,7 +23,7 @@ export async function loginHandler(
     const payload = omit((user as UserDocument).toJSON(), ["password", "__v"]);
 
     const jwt = signJwt(payload);
-
+    console.log(CORS_ORIGIN, "COOKIE");
     res.cookie("accessToken", jwt, {
       maxAge: 3.154e10, // 1 year
       httpOnly: true,
