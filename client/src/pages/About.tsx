@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Link as LinkIcon } from "lucide-react";
 
 const About = () => {
   return (
@@ -9,9 +10,21 @@ const About = () => {
             About
           </h2>
           <p className="text-lg leading-7 text-gray-600">
-            Welcome to my video streaming project! It aims to provide a seamless
-            experience for uploading and streaming videos, all powered by the
-            latest technologies.
+            Welcome to my video streaming project!
+            {/* <span>
+              {" "}
+              <a
+                href="https://github.com/your-username/your-repository"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline flex items-center ml-1"
+              >
+                {" "}
+                Source Code
+              </a>
+            </span> */}
+           {" "} It aims to provide a seamless experience for uploading and streaming
+            videos, all powered by the latest technologies.
           </p>
           <p className="mt-4 text-lg leading-7 text-gray-600">
             To get started, simply register or login, and then upload your
