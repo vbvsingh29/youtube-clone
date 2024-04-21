@@ -18,8 +18,8 @@ const Home = () => {
         <div className="flex flex-col items-center justify-center h-screen">
           <div className="text-center mb-4">
             <p className="text-gray-600">
-              Sit tight! Loading may take approximately 40-50 seconds as I'm
-              utilizing a free API deployment.
+              Sit tight! Intial loading may take approximately 40-50 seconds as
+              I'm utilizing a free API deployment.
             </p>
           </div>
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
