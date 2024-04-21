@@ -11,13 +11,10 @@ const Header = () => {
     <header className="bg-black text-white py-4 px-6 lg:px-8 shadow-md">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button className="lg:hidden">
-            <Menu />
-          </button>
-          <Link to={"/"}>
+          <Link to={"/"}>   
             <img src={logo} className="h-8" />
           </Link>
-          <nav className="hidden lg:flex items-center gap-6">
+          <nav className="lg:flex items-center gap-6">
             <Link to={"/"} className="hover:text-gray-400">
               Home
             </Link>
