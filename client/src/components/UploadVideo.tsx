@@ -23,6 +23,7 @@ function EditVideoForm({ videoId, onClose, videos }) {
         description: data.description,
         published: data.published,
         thumbnail,
+        sourceCode: data.sourceCode,
         token,
       });
       onClose();
@@ -81,6 +82,16 @@ function EditVideoForm({ videoId, onClose, videos }) {
         <textarea
           id="description"
           {...register("description", { required: true })}
+          className="border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 block w-full text-gray-800  p-2"
+        />
+      </div>
+      <div className="mb-4">
+        <label htmlFor="sourceCode" className="block font-medium text-gray-800">
+          Source Code
+        </label>
+        <textarea
+          id="sourceCode"
+          {...register("sourceCode")}
           className="border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 block w-full text-gray-800  p-2"
         />
       </div>

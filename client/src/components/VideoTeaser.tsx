@@ -2,14 +2,19 @@ import { Link } from "react-router-dom";
 import { Video } from "../../types";
 import s3 from "../../aws/aws.config";
 import { AWS_BUCKET_NAME } from "../utils/constants";
+import { Link as LinkIcon } from "lucide-react";
 
 const VideoTeaser = ({ video }: { video: Video }) => {
-  console.log(AWS_BUCKET_NAME, "Bucket");
   const url = s3.getSignedUrl("getObject", {
     Bucket: AWS_BUCKET_NAME || "",
     Key: `thumbnails/${video.thumbnail}.${video.thumbnailExt}`,
-    // Expires: signedUrlExpireSeconds
   });
+
+  const handleLinkIconClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    window.open(video.sourceCode, "_blank");
+  };
+
   return (
     <Link
       to={`/watch/${video.videoId}`}
@@ -31,11 +36,29 @@ const VideoTeaser = ({ video }: { video: Video }) => {
           </svg>
         </div>
       </div>
-      <div className="p-3">
-        <h2 className="text-lg font-semibold text-gray-800 mb-1">
-          {video.title}
-        </h2>
-        <p className="text-gray-600 line-clamp-2">{video.description}</p>
+      <div className="p-3 flex flex-col justify-between w-2/3">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800 mb-1">
+            {video.title}{" "}
+            {video.sourceCode && (
+              <a
+                href={video.sourceCode}
+                onClick={handleLinkIconClick}
+                className="self-end"
+              >
+                <LinkIcon />
+              </a>
+            )}
+          </h2>
+          <p className="text-gray-600 line-clamp-2">{video.description}</p>
+        </div>
+        {video.sourceCode && (
+          <div className="self-end mt-0">
+            <a href={video.sourceCode} onClick={handleLinkIconClick}>
+              <LinkIcon />
+            </a>
+          </div>
+        )}
       </div>
     </Link>
   );

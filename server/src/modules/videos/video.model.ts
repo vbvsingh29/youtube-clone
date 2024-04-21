@@ -22,6 +22,9 @@ export class Video {
   @prop()
   public thumbnail: string;
 
+  @prop()
+  public sourceCode: string;
+
   @prop({ unique: true })
   public s3Key: string;
 

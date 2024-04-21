@@ -144,6 +144,8 @@ export async function updateVideoHandler(
         video.title = val;
       } else if (name === "published") {
         video.published = val === "true";
+      } else if (name === "sourceCode") {
+        video.sourceCode = val;
       }
     });
 

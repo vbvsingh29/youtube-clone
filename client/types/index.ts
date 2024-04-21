@@ -17,6 +17,7 @@ export interface Video {
   createdAt: Date;
   updatedAt: Date;
   thumbnail: string;
+  sourceCode: string;
   thumbnailExt: string;
   __v: number;
   extension: string;
