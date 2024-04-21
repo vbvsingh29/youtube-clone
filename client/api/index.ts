@@ -55,6 +55,7 @@ export function updateVideo({
   description,
   published,
   thumbnail,
+  sourceCode,
   token,
 }: {
   videoId: string;
@@ -62,11 +63,13 @@ export function updateVideo({
   description: string;
   published: boolean;
   thumbnail?: File;
+  sourceCode?: string;
   token: string | null;
 }): Promise<AxiosResponse<Video>> {
   const formData = new FormData();
   formData.append("title", title);
   formData.append("description", description);
+  formData.append("sourceCode", sourceCode);
   formData.append("published", published.toString());
   if (thumbnail) {
     formData.append("thumbnail", thumbnail);
