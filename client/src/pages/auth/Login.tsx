@@ -1,10 +1,12 @@
 import { useForm, SubmitHandler } from "react-hook-form";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { login } from "../../../api";
 import { toast, Slide } from "react-toastify";
 import { useMe } from "../../../context/me";
+import { setToken } from "../../../store/tokenSlice";
 
 type loginInput = {
   email: string;
@@ -15,6 +17,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { setUser } = useMe();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const {
     register,
@@ -25,10 +28,8 @@ const Login = () => {
   const onSubmit: SubmitHandler<loginInput> = async (data) => {
     try {
       const user = await login(data);
-      console.log(user, "USER DETAILS");
       if (user) {
-        console.log("cookie", user);
-        document.cookie = `accessToken=${user}; max-age=31540000; path=/; secure; SameSite=None; httpOnly=true`;
+        dispatch(setToken(user));
       }
       setUser(user);
       navigate("/");

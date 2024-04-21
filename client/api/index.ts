@@ -21,29 +21,30 @@ export function login(payload: { email: string; password: string }) {
     .then((res) => res.data);
 }
 
-export function getMe() {
+export function getMe(token: string | null) {
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
   return axiosInstance
-    .get(userBase, {
-      withCredentials: true,
-    })
+    .get(userBase, { withCredentials: true, headers })
     .then((res) => res.data)
-    .catch(() => {
-      return null;
-    });
+    .catch(() => null);
 }
 
 export function uploadVideo({
   formData,
   config,
+  token,
 }: {
   formData: FormData;
   config: { onUploadProgress: (progressEvent: any) => void };
+  token: string | null;
 }) {
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
   return axiosInstance
     .post(videoBase, formData, {
       withCredentials: true,
       ...config,
       onUploadProgress: config.onUploadProgress,
+      headers,
     })
     .then((res) => res.data);
 }
@@ -54,26 +55,28 @@ export function updateVideo({
   description,
   published,
   thumbnail,
+  token,
 }: {
   videoId: string;
   title: string;
   description: string;
   published: boolean;
   thumbnail?: File;
+  token: string | null;
 }): Promise<AxiosResponse<Video>> {
   const formData = new FormData();
   formData.append("title", title);
   formData.append("description", description);
   formData.append("published", published.toString());
-
   if (thumbnail) {
     formData.append("thumbnail", thumbnail);
   }
-
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
   return axiosInstance.patch(`${videoBase}/${videoId}`, formData, {
     withCredentials: true,
     headers: {
       "Content-Type": "multipart/form-data",
+      ...headers,
     },
   });
 }

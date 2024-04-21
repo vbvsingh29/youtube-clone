@@ -7,8 +7,11 @@ import { Video } from "../../types";
 import { useVideo } from "../../context/videos";
 import { Slide, toast } from "react-toastify";
 import Progress_Bar from "../utils/ProgressBar";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
 
 function EditVideoForm({ videoId, onClose, videos }) {
+  const token = useSelector((state: RootState) => state.token.token);
   const { register, handleSubmit } = useForm();
   const [thumbnail, setThumbnail] = useState<File | null>(null);
 
@@ -20,6 +23,7 @@ function EditVideoForm({ videoId, onClose, videos }) {
         description: data.description,
         published: data.published,
         thumbnail,
+        token,
       });
       onClose();
       // videos();
@@ -163,6 +167,7 @@ function CustomModal({ show, onClose, children, progress }) {
 }
 
 function UploadVideo() {
+  const token = useSelector((state: RootState) => state.token.token);
   const [show, setShow] = useState(false);
   const [progress, setProgress] = useState(0);
   const [video, setVideo] = useState<Video>(null);
@@ -182,6 +187,7 @@ function UploadVideo() {
             setProgress(percent);
           },
         },
+        token,
       });
       setVideo(response);
       setProgress(100);
