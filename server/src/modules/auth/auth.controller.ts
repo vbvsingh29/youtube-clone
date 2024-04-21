@@ -21,17 +21,15 @@ export async function loginHandler(
     }
     const payload = omit((user as UserDocument).toJSON(), ["password", "__v"]);
     const jwt = signJwt(payload);
-    const renderDomain = "https://youtube-clone-4iws.onrender.com";
-    console.log(renderDomain, "DOMAIN", CORS_ORIGIN);
 
-    res.cookie("accessToken", jwt, {
-      maxAge: 3.154e10, // 1 year
-      httpOnly: true,
-      domain: ".onrender.com",
-      path: "/",
-      sameSite: "none",
-      secure: true,
-    });
+      // res.cookie("accessToken", jwt, {
+      //   maxAge: 3.154e10, // 1 year
+      //   httpOnly: true,
+      //   domain: ".onrender.com",
+      //   path: "/",
+      //   sameSite: "none",
+      //   secure: true,
+      // });
 
     return res.status(StatusCodes.OK).send(jwt);
   } catch (e: any) {}
