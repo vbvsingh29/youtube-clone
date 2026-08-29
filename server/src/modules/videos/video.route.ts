@@ -6,6 +6,8 @@ import {
   streamThumbnailHandler,
   updateVideoHandler,
   uploadVideoHandler,
+  deleteVideoHandler,
+  deleteVideosHandler,
 } from "./video.controller";
 
 const router = express.Router();
@@ -15,5 +17,7 @@ router.patch("/:videoId", requireUser, updateVideoHandler);
 router.get("/", findVideosHandler);
 router.get("/:videoId", streamVideoHandler);
 router.get("/:videoId/thumbnail", streamThumbnailHandler);
+router.delete("/:videoId", deleteVideoHandler);
+router.delete("/", deleteVideosHandler);
 
 export default router;

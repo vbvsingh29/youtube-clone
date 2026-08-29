@@ -84,7 +84,8 @@ export function updateVideo({
   });
 }
 
-export function getVideos(q?: string) {
+export function getVideos(q?: string, token?: string | null) {
   const url = q ? `${videoBase}?q=${encodeURIComponent(q)}` : videoBase;
-  return axiosInstance.get(url).then((res) => res.data);
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  return axiosInstance.get(url, { headers }).then((res) => res.data);
 }

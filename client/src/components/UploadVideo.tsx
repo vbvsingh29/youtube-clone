@@ -10,7 +10,15 @@ import Progress_Bar from "../utils/ProgressBar";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 
-function EditVideoForm({ videoId, onClose, videos }) {
+export function EditVideoForm({
+  videoId,
+  onClose,
+  videos,
+}: {
+  videoId: string;
+  onClose: () => void;
+  videos: any;
+}) {
   const token = useSelector((state: RootState) => state.token.token);
   const { register, handleSubmit } = useForm();
   const [thumbnail, setThumbnail] = useState<File | null>(null);
@@ -134,7 +142,17 @@ function EditVideoForm({ videoId, onClose, videos }) {
   );
 }
 
-function CustomModal({ show, onClose, children, progress }) {
+export function CustomModal({
+  show,
+  onClose,
+  children,
+  progress,
+}: {
+  show: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  progress?: number;
+}) {
   return (
     <>
       {show && (
