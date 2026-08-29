@@ -1,14 +1,10 @@
 import { Link } from "react-router-dom";
 import { Video } from "../../types";
-import s3 from "../../aws/aws.config";
-import { AWS_BUCKET_NAME } from "../utils/constants";
+import { API_ENDPOINT } from "../utils/constants";
 import { Link as LinkIcon } from "lucide-react";
 
 const VideoTeaser = ({ video }: { video: Video }) => {
-  const url = s3.getSignedUrl("getObject", {
-    Bucket: AWS_BUCKET_NAME || "",
-    Key: `thumbnails/${video.thumbnail}.${video.thumbnailExt}`,
-  });
+  const url = `${API_ENDPOINT}/api/videos/${video.videoId}/thumbnail`;
 
   const handleLinkIconClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();

@@ -4,7 +4,7 @@ import fs from "fs";
 import { Request, Response } from "express";
 import { createVideo, findVideo, findVideos } from "./video.service";
 import { StatusCodes } from "http-status-codes";
-import { Video } from "./video.model";
+import { Video, VideoModel } from "./video.model";
 import { UpdateVideoBody, UpdateVideoParams } from "./video.schema";
 import { AWS_BUCKET_NAME } from "../../utils/constants";
 import s3 from "../../../aws/aws.config";
@@ -35,13 +35,40 @@ function getImgPath({
 
 export async function uploadVideoHandler(req: Request, res: Response) {
   try {
-    const bb = busboy({ headers: req.headers });
-
     const user = res.locals.user;
+    if (!user) {
+      return res.status(StatusCodes.UNAUTHORIZED).send("Unauthorized");
+    }
+
+    // 1. Enforce max 5 videos limit per account
+    const videoCount = await VideoModel.countDocuments({ owner: user._id });
+    if (videoCount >= 5) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .send("Upload limit reached. You can upload a maximum of 5 videos on the free tier.");
+    }
+
+    // 2. Enforce max 10MB file size limit
+    const contentLength = req.headers["content-length"];
+    if (contentLength && Number(contentLength) > 10 * 1024 * 1024) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .send("File size exceeds the 10MB limit for the free tier.");
+    }
+
+    const bb = busboy({
+      headers: req.headers,
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+        files: 1,
+      },
+    });
+
     const video = await createVideo({ owner: user._id });
 
     bb.on("file", async (_, file, info) => {
       if (!VIDEO_MIME_TYPES.includes(info.mimeType)) {
+        await VideoModel.deleteOne({ _id: video._id });
         return res.status(StatusCodes.BAD_REQUEST).send("Invalid File Type");
       }
       const extension = info.mimeType.split("/")[1];
@@ -62,13 +89,18 @@ export async function uploadVideoHandler(req: Request, res: Response) {
         await video.save();
       } catch (e) {
         console.error("Error uploading video to S3:", e);
-        return res
-          .status(StatusCodes.INTERNAL_SERVER_ERROR)
-          .send("Error uploading video");
+        await VideoModel.deleteOne({ _id: video._id });
+        if (!res.headersSent) {
+          return res
+            .status(StatusCodes.INTERNAL_SERVER_ERROR)
+            .send("Error uploading video");
+        }
       }
     });
 
     bb.on("close", () => {
+      if (res.headersSent) return;
+
       res.writeHead(StatusCodes.CREATED, {
         connection: "close",
         "Content-Type": "application/json",
@@ -80,7 +112,7 @@ export async function uploadVideoHandler(req: Request, res: Response) {
 
     return req.pipe(bb);
   } catch (e: any) {
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(e.message);
   }
 }
 
@@ -101,7 +133,14 @@ export async function updateVideoHandler(
       return res.status(StatusCodes.UNAUTHORIZED).send("Unauthorized");
     }
 
-    const bb = busboy({ headers: req.headers });
+    // Limit thumbnail file uploads to 2MB
+    const bb = busboy({
+      headers: req.headers,
+      limits: {
+        fileSize: 2 * 1024 * 1024,
+        files: 1,
+      },
+    });
     let thumbnail: string | null = null;
     let thumbnailExt: string | null = null;
 
@@ -131,9 +170,11 @@ export async function updateVideoHandler(
         await video.save();
       } catch (e) {
         console.error("Error uploading thumbnail to S3:", e);
-        return res
-          .status(StatusCodes.INTERNAL_SERVER_ERROR)
-          .send("Error uploading video");
+        if (!res.headersSent) {
+          return res
+            .status(StatusCodes.INTERNAL_SERVER_ERROR)
+            .send("Error uploading thumbnail");
+        }
       }
     });
 
@@ -150,6 +191,8 @@ export async function updateVideoHandler(
     });
 
     bb.on("finish", async () => {
+      if (res.headersSent) return;
+
       if (thumbnail !== null && thumbnailExt !== null) {
         video.thumbnail = thumbnail;
         video.thumbnailExt = thumbnailExt;
@@ -164,13 +207,45 @@ export async function updateVideoHandler(
   }
 }
 
-export async function findVideosHandler(_: Request, res: Response) {
+export async function findVideosHandler(req: Request, res: Response) {
   try {
-    const videos = await findVideos();
+    const user = res.locals.user;
+    const { q } = req.query;
 
+    let queryObj: any = {};
+
+    if (user) {
+      // User is logged in: see public videos OR their own videos (public or private)
+      queryObj = {
+        $or: [
+          { published: true },
+          { owner: user._id }
+        ]
+      };
+    } else {
+      // Guest: can only see public videos
+      queryObj = { published: true };
+    }
+
+    if (q) {
+      // If a search query is provided, match by title or description case-insensitively
+      queryObj = {
+        $and: [
+          queryObj,
+          {
+            $or: [
+              { title: { $regex: q, $options: "i" } },
+              { description: { $regex: q, $options: "i" } }
+            ]
+          }
+        ]
+      };
+    }
+
+    const videos = await VideoModel.find(queryObj).lean();
     return res.status(StatusCodes.OK).send(videos);
   } catch (e: any) {
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(e.message);
   }
 }
 
@@ -187,6 +262,14 @@ export async function streamVideoHandlers(req: Request, res: Response) {
 
     if (!video) {
       return res.status(StatusCodes.NOT_FOUND).send("Video Not Found");
+    }
+
+    // Check privacy: if not published/public, only allow the owner
+    if (!video.published) {
+      const user = res.locals.user;
+      if (!user || String(video.owner) !== String(user._id)) {
+        return res.status(StatusCodes.FORBIDDEN).send("This video is private");
+      }
     }
 
     const filePath = getPath({
@@ -221,7 +304,7 @@ export async function streamVideoHandlers(req: Request, res: Response) {
 
     videoStream.pipe(res);
   } catch (e: any) {
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(e.message);
   }
 }
 
@@ -239,6 +322,14 @@ export async function streamVideoHandler(req: Request, res: Response) {
 
     if (!video) {
       return res.status(StatusCodes.NOT_FOUND).send("Video Not Found");
+    }
+
+    // Check privacy: if not published/public, only allow the owner
+    if (!video.published) {
+      const user = res.locals.user;
+      if (!user || String(video.owner) !== String(user._id)) {
+        return res.status(StatusCodes.FORBIDDEN).send("This video is private");
+      }
     }
 
     const { ContentLength: fileSizeInBytes } = await s3
@@ -279,6 +370,40 @@ export async function streamVideoHandler(req: Request, res: Response) {
     s3Stream.pipe(res);
   } catch (e: any) {
     console.error("Error streaming video:", e);
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .send("Internal Server Error");
+  }
+}
+
+export async function streamThumbnailHandler(req: Request, res: Response) {
+  try {
+    const { videoId } = req.params;
+    const video = await findVideo(videoId);
+
+    if (!video || !video.thumbnail || !video.thumbnailExt) {
+      return res.status(StatusCodes.NOT_FOUND).send("Thumbnail Not Found");
+    }
+
+    // Check privacy
+    if (!video.published) {
+      const user = res.locals.user;
+      if (!user || String(video.owner) !== String(user._id)) {
+        return res.status(StatusCodes.FORBIDDEN).send("This video is private");
+      }
+    }
+
+    const s3Key = `thumbnails/${video.videoId}.${video.thumbnailExt}`;
+
+    const signedUrl = s3.getSignedUrl("getObject", {
+      Bucket: AWS_BUCKET_NAME || "",
+      Key: s3Key,
+      Expires: 300 // 5 minutes
+    });
+
+    return res.redirect(signedUrl);
+  } catch (e: any) {
+    console.error("Error redirecting to thumbnail:", e);
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .send("Internal Server Error");

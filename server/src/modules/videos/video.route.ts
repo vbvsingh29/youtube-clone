@@ -3,6 +3,7 @@ import requireUser from "../../middleware/requireUser";
 import {
   findVideosHandler,
   streamVideoHandler,
+  streamThumbnailHandler,
   updateVideoHandler,
   uploadVideoHandler,
 } from "./video.controller";
@@ -13,5 +14,6 @@ router.post("/", requireUser, uploadVideoHandler);
 router.patch("/:videoId", requireUser, updateVideoHandler);
 router.get("/", findVideosHandler);
 router.get("/:videoId", streamVideoHandler);
+router.get("/:videoId/thumbnail", streamThumbnailHandler);
 
 export default router;

@@ -8,21 +8,36 @@ import {
 import { Video } from "../types";
 import { getVideos } from "../api";
 
-const VideoContext = createContext<Video[] | null>(null);
+interface VideoContextType {
+  videos: Video[] | null;
+  refetchVideos: (query?: string) => Promise<void>;
+}
+
+const VideoContext = createContext<VideoContextType>({
+  videos: null,
+  refetchVideos: async () => {},
+});
 
 function VideoContextProvider({ children }: { children: ReactNode }) {
   const [videos, setVideos] = useState<Video[] | null>(null);
 
-  useEffect(() => {
-    async function fetchVideos() {
-      const fetchedVideos = await getVideos();
+  async function refetchVideos(query?: string) {
+    try {
+      const fetchedVideos = await getVideos(query);
       setVideos(fetchedVideos);
+    } catch (error) {
+      console.error("Error fetching videos:", error);
     }
-    fetchVideos();
+  }
+
+  useEffect(() => {
+    refetchVideos();
   }, []);
 
   return (
-    <VideoContext.Provider value={videos}>{children}</VideoContext.Provider>
+    <VideoContext.Provider value={{ videos, refetchVideos }}>
+      {children}
+    </VideoContext.Provider>
   );
 }
 
