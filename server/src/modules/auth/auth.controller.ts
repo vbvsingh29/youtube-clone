@@ -14,7 +14,7 @@ export async function loginHandler(
   const { email, password } = req.body;
   try {
     const user = await findUserByEmail(email);
-    if (!user || !user.comparePassword(password)) {
+    if (!user || !(await user.comparePassword(password))) {
       return res
         .status(StatusCodes.UNAUTHORIZED)
         .send("Invalid Email or Password");
@@ -22,15 +22,9 @@ export async function loginHandler(
     const payload = omit((user as UserDocument).toJSON(), ["password", "__v"]);
     const jwt = signJwt(payload);
 
-      // res.cookie("accessToken", jwt, {
-      //   maxAge: 3.154e10, // 1 year
-      //   httpOnly: true,
-      //   domain: ".onrender.com",
-      //   path: "/",
-      //   sameSite: "none",
-      //   secure: true,
-      // });
-
     return res.status(StatusCodes.OK).send(jwt);
-  } catch (e: any) {}
+  } catch (e: any) {
+    console.error("Login error:", e);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(e.message);
+  }
 }
