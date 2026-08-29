@@ -32,29 +32,22 @@ const VideoTeaser = ({ video }: { video: Video }) => {
           </svg>
         </div>
       </div>
-      <div className="p-3 flex flex-col justify-between w-2/3">
+      <div className="p-3 flex flex-col justify-between w-full">
         <div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-1">
-            {video.title}{" "}
+          <h2 className="text-lg font-semibold text-gray-800 mb-1 flex items-center justify-between">
+            <span>{video.title}</span>
             {video.sourceCode && (
               <a
                 href={video.sourceCode}
                 onClick={handleLinkIconClick}
-                className="self-end"
+                className="text-gray-500 hover:text-black"
               >
-                <LinkIcon />
+                <LinkIcon size={18} />
               </a>
             )}
           </h2>
-          <p className="text-gray-600 line-clamp-2">{video.description}</p>
+          <p className="text-gray-600 line-clamp-2 text-sm">{video.description}</p>
         </div>
-        {video.sourceCode && (
-          <div className="self-end mt-0">
-            <a href={video.sourceCode} onClick={handleLinkIconClick}>
-              <LinkIcon />
-            </a>
-          </div>
-        )}
       </div>
     </Link>
   );
