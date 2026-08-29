@@ -1,14 +1,30 @@
 import { Link } from "react-router-dom";
 import { Video } from "../../types";
 import { API_ENDPOINT } from "../utils/constants";
-import { Link as LinkIcon } from "lucide-react";
+import { Link as LinkIcon, Edit as EditIcon } from "lucide-react";
+import { useState } from "react";
+import { useMe } from "../../context/me";
+import { useVideo } from "../../context/videos";
+import { CustomModal, EditVideoForm } from "./UploadVideo";
 
 const VideoTeaser = ({ video }: { video: Video }) => {
   const url = `${API_ENDPOINT}/api/videos/${video.videoId}/thumbnail`;
+  const { user } = useMe();
+  const videos = useVideo();
+  const [showEdit, setShowEdit] = useState(false);
+
+  const isOwner = user && String(video.owner) === String(user._id);
 
   const handleLinkIconClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
+    event.stopPropagation();
     window.open(video.sourceCode, "_blank");
+  };
+
+  const handleEditClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setShowEdit(true);
   };
 
   return (
@@ -32,30 +48,43 @@ const VideoTeaser = ({ video }: { video: Video }) => {
           </svg>
         </div>
       </div>
-      <div className="p-3 flex flex-col justify-between w-2/3">
+      <div className="p-3 flex flex-col justify-between w-full">
         <div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-1">
-            {video.title}{" "}
-            {video.sourceCode && (
-              <a
-                href={video.sourceCode}
-                onClick={handleLinkIconClick}
-                className="self-end"
-              >
-                <LinkIcon />
-              </a>
-            )}
+          <h2 className="text-lg font-semibold text-gray-800 mb-1 flex items-center justify-between">
+            <span>{video.title}</span>
+            <div className="flex items-center gap-2">
+              {isOwner && (
+                <button
+                  onClick={handleEditClick}
+                  className="text-blue-500 hover:text-blue-700 focus:outline-none"
+                  title="Edit video details"
+                >
+                  <EditIcon size={18} />
+                </button>
+              )}
+              {video.sourceCode && (
+                <a
+                  href={video.sourceCode}
+                  onClick={handleLinkIconClick}
+                  className="text-gray-500 hover:text-black"
+                >
+                  <LinkIcon size={18} />
+                </a>
+              )}
+            </div>
           </h2>
-          <p className="text-gray-600 line-clamp-2">{video.description}</p>
+          <p className="text-gray-600 line-clamp-2 text-sm">{video.description}</p>
         </div>
-        {video.sourceCode && (
-          <div className="self-end mt-0">
-            <a href={video.sourceCode} onClick={handleLinkIconClick}>
-              <LinkIcon />
-            </a>
-          </div>
-        )}
       </div>
+      {isOwner && (
+        <CustomModal show={showEdit} onClose={() => setShowEdit(false)}>
+          <EditVideoForm
+            videoId={video.videoId}
+            onClose={() => setShowEdit(false)}
+            videos={videos}
+          />
+        </CustomModal>
+      )}
     </Link>
   );
 };

@@ -12,6 +12,7 @@ import WatchVideo from "./pages/watch/WatchVideo";
 import About from "./pages/About";
 import AuthorIntro from "./pages/AuthotInto";
 import ErrorPage from "./pages/ErrorPage";
+import Admin from "./pages/Admin";
 
 const App = () => (
   <BrowserRouter>
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/register" element={<Register />} />
           <Route path="/watch/:query" element={<WatchVideo />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<ErrorPage />} /> 
         </Routes>
         {/* <Footer /> */}

@@ -17,12 +17,12 @@ const Home = () => {
       {loading ? (
         <div className="flex flex-col items-center justify-center h-screen">
           <div className="text-center mb-4">
-            <p className="text-gray-600">
+            <p className="text-zinc-400">
               Sit tight! Initial loading may take approximately 40-50 seconds as
               I'm utilizing a free API deployment.
             </p>
           </div>
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 rounded-lg">

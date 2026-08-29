@@ -6,6 +6,7 @@ import { createVideo, findVideo, findVideos } from "./video.service";
 import { StatusCodes } from "http-status-codes";
 import { Video, VideoModel } from "./video.model";
 import { UpdateVideoBody, UpdateVideoParams } from "./video.schema";
+import { ADMIN_SECRET, ADMIN_USERNAME } from "../../utils/constants";
 
 const VIDEO_MIME_TYPES = ["video/mp4"];
 const IMG_MIME_TYPES = ["image/jpg", "image/jpeg", "image/png"];
@@ -232,11 +233,13 @@ export async function updateVideoHandler(
 export async function findVideosHandler(req: Request, res: Response) {
   try {
     const user = res.locals.user;
-    const { q } = req.query;
+    const { q, adminSecret, adminUsername } = req.query;
 
     let queryObj: any = {};
 
-    if (user) {
+    if (adminSecret === ADMIN_SECRET && adminUsername === ADMIN_USERNAME) {
+      queryObj = {};
+    } else if (user) {
       // User is logged in: see public videos OR their own videos (public or private)
       queryObj = {
         $or: [
@@ -367,5 +370,72 @@ export async function streamThumbnailHandler(req: Request, res: Response) {
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .send("Internal Server Error");
+  }
+}
+
+export async function deleteVideoHandler(req: Request, res: Response) {
+  try {
+    const { videoId } = req.params;
+    const adminSecret = req.headers["admin-secret"] || req.query.adminSecret;
+    const adminUsername = req.headers["admin-username"] || req.query.adminUsername;
+
+    if (adminSecret !== ADMIN_SECRET || adminUsername !== ADMIN_USERNAME) {
+      return res.status(StatusCodes.UNAUTHORIZED).send("Unauthorized Admin Access");
+    }
+
+    const video = await findVideo(videoId);
+    if (!video) {
+      return res.status(StatusCodes.NOT_FOUND).send("Video Not Found");
+    }
+
+    // Delete local files
+    const videoPath = getPath({ videoId: video.videoId, extension: video.extension });
+    const thumbPath = getImgPath({ thumbnail: video.videoId, extension: video.thumbnailExt });
+
+    try { fs.unlinkSync(videoPath); } catch {}
+    try { fs.unlinkSync(thumbPath); } catch {}
+
+    // Delete database record
+    await VideoModel.deleteOne({ _id: video._id });
+
+    return res.status(StatusCodes.OK).send({ message: "Video deleted successfully" });
+  } catch (e: any) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(e.message);
+  }
+}
+
+export async function deleteVideosHandler(req: Request, res: Response) {
+  try {
+    const adminSecret = req.headers["admin-secret"] || req.query.adminSecret;
+    const adminUsername = req.headers["admin-username"] || req.query.adminUsername;
+
+    if (adminSecret !== ADMIN_SECRET || adminUsername !== ADMIN_USERNAME) {
+      return res.status(StatusCodes.UNAUTHORIZED).send("Unauthorized Admin Access");
+    }
+
+    // Read and delete all files in local video/thumbnail directories
+    const videosDir = path.join(process.cwd(), "videos");
+    const thumbnailsDir = path.join(process.cwd(), "thumbnails");
+
+    try {
+      const files = fs.readdirSync(videosDir);
+      for (const file of files) {
+        fs.unlinkSync(path.join(videosDir, file));
+      }
+    } catch {}
+
+    try {
+      const files = fs.readdirSync(thumbnailsDir);
+      for (const file of files) {
+        fs.unlinkSync(path.join(thumbnailsDir, file));
+      }
+    } catch {}
+
+    // Delete all records in database
+    await VideoModel.deleteMany({});
+
+    return res.status(StatusCodes.OK).send({ message: "All videos cleaned up successfully" });
+  } catch (e: any) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(e.message);
   }
 }

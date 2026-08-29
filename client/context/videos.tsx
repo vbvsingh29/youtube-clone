@@ -7,6 +7,8 @@ import {
 } from "react";
 import { Video } from "../types";
 import { getVideos } from "../api";
+import { useSelector } from "react-redux";
+import { RootState } from "../store/store";
 
 interface VideoContextType {
   videos: Video[] | null;
@@ -20,10 +22,11 @@ const VideoContext = createContext<VideoContextType>({
 
 function VideoContextProvider({ children }: { children: ReactNode }) {
   const [videos, setVideos] = useState<Video[] | null>(null);
+  const token = useSelector((state: RootState) => state.token.token);
 
   async function refetchVideos(query?: string) {
     try {
-      const fetchedVideos = await getVideos(query);
+      const fetchedVideos = await getVideos(query, token);
       setVideos(fetchedVideos);
     } catch (error) {
       console.error("Error fetching videos:", error);
@@ -32,7 +35,7 @@ function VideoContextProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refetchVideos();
-  }, []);
+  }, [token]);
 
   return (
     <VideoContext.Provider value={{ videos, refetchVideos }}>
