@@ -1,17 +1,25 @@
 import busboy from "busboy";
-import aws from "aws-sdk";
 import fs from "fs";
+import path from "path";
 import { Request, Response } from "express";
 import { createVideo, findVideo, findVideos } from "./video.service";
 import { StatusCodes } from "http-status-codes";
 import { Video, VideoModel } from "./video.model";
 import { UpdateVideoBody, UpdateVideoParams } from "./video.schema";
-import { AWS_BUCKET_NAME } from "../../utils/constants";
-import s3 from "../../../aws/aws.config";
 
 const VIDEO_MIME_TYPES = ["video/mp4"];
 const IMG_MIME_TYPES = ["image/jpg", "image/jpeg", "image/png"];
 const CHUNK_SIZE_IN_BYTES = 1000000; //1mb
+
+const videosDir = path.join(process.cwd(), "videos");
+const thumbnailsDir = path.join(process.cwd(), "thumbnails");
+
+if (!fs.existsSync(videosDir)) {
+  fs.mkdirSync(videosDir, { recursive: true });
+}
+if (!fs.existsSync(thumbnailsDir)) {
+  fs.mkdirSync(thumbnailsDir, { recursive: true });
+}
 
 function getPath({
   videoId,
@@ -65,49 +73,61 @@ export async function uploadVideoHandler(req: Request, res: Response) {
     });
 
     const video = await createVideo({ owner: user._id });
+    const uploadPromises: Promise<any>[] = [];
 
-    bb.on("file", async (_, file, info) => {
+    bb.on("file", (_, file, info) => {
       if (!VIDEO_MIME_TYPES.includes(info.mimeType)) {
-        await VideoModel.deleteOne({ _id: video._id });
-        return res.status(StatusCodes.BAD_REQUEST).send("Invalid File Type");
+        const p = VideoModel.deleteOne({ _id: video._id });
+        uploadPromises.push(p.then(() => { throw new Error("Invalid File Type"); }));
+        file.resume();
+        return;
       }
       const extension = info.mimeType.split("/")[1];
-      const fileName = `${video.videoId}.${extension}`;
-      const folderName = "videos";
+      const videoPath = getPath({ videoId: video.videoId, extension });
 
-      const params: aws.S3.PutObjectRequest = {
-        Bucket: AWS_BUCKET_NAME || "default",
-        Key: `${folderName}/${fileName}`,
-        Body: file,
-        ContentType: info.mimeType,
-      };
-
-      try {
-        await s3.upload(params).promise();
-        video.extension = extension;
-        video.s3Key = `${folderName}/${fileName}`;
-        await video.save();
-      } catch (e) {
-        console.error("Error uploading video to S3:", e);
-        await VideoModel.deleteOne({ _id: video._id });
-        if (!res.headersSent) {
-          return res
-            .status(StatusCodes.INTERNAL_SERVER_ERROR)
-            .send("Error uploading video");
-        }
-      }
+      const uploadPromise = new Promise((resolve, reject) => {
+        const writeStream = fs.createWriteStream(videoPath);
+        file.pipe(writeStream);
+        writeStream.on("finish", async () => {
+          try {
+            video.extension = extension;
+            video.s3Key = `local:${video.videoId}.${extension}`;
+            await video.save();
+            resolve(null);
+          } catch (e) {
+            reject(e);
+          }
+        });
+        writeStream.on("error", async (err) => {
+          console.error("Local video write error:", err);
+          await VideoModel.deleteOne({ _id: video._id });
+          try { fs.unlinkSync(videoPath); } catch {}
+          reject(err);
+        });
+      });
+      uploadPromises.push(uploadPromise);
     });
 
-    bb.on("close", () => {
-      if (res.headersSent) return;
+    bb.on("close", async () => {
+      try {
+        if (uploadPromises.length === 0) {
+          await VideoModel.deleteOne({ _id: video._id });
+          if (!res.headersSent) {
+            return res.status(StatusCodes.BAD_REQUEST).send("No video file uploaded");
+          }
+          return;
+        }
 
-      res.writeHead(StatusCodes.CREATED, {
-        connection: "close",
-        "Content-Type": "application/json",
-      });
+        await Promise.all(uploadPromises);
 
-      res.write(JSON.stringify(video));
-      res.end();
+        if (res.headersSent) return;
+
+        res.status(StatusCodes.CREATED).json(video);
+      } catch (err: any) {
+        if (!res.headersSent) {
+          res.status(StatusCodes.INTERNAL_SERVER_ERROR).send("Error uploading video: " + err.message);
+        }
+      }
     });
 
     return req.pipe(bb);
@@ -143,39 +163,33 @@ export async function updateVideoHandler(
     });
     let thumbnail: string | null = null;
     let thumbnailExt: string | null = null;
+    const uploadPromises: Promise<any>[] = [];
 
-    bb.on("file", async (_, file, info) => {
+    bb.on("file", (_, file, info) => {
       if (!IMG_MIME_TYPES.includes(info.mimeType)) {
-        return res.status(StatusCodes.BAD_REQUEST).send("Invalid File Type");
+        const p = Promise.reject(new Error("Invalid File Type"));
+        uploadPromises.push(p);
+        file.resume();
+        return;
       }
 
       const extension = info.mimeType.split("/")[1];
-      const fileName = `${video.videoId}.${extension}`;
-      const folderName = "thumbnails";
+      const thumbPath = getImgPath({ thumbnail: video.videoId, extension });
 
-      const params: aws.S3.PutObjectRequest = {
-        Bucket: AWS_BUCKET_NAME || "default",
-        Key: `${folderName}/${fileName}`,
-        Body: file,
-        ContentType: info.mimeType,
-      };
-
-      thumbnail = `${videoId}`;
-      thumbnailExt = extension;
-
-      try {
-        await s3.upload(params).promise();
-        thumbnail = `${videoId}`;
-        thumbnailExt = extension;
-        await video.save();
-      } catch (e) {
-        console.error("Error uploading thumbnail to S3:", e);
-        if (!res.headersSent) {
-          return res
-            .status(StatusCodes.INTERNAL_SERVER_ERROR)
-            .send("Error uploading thumbnail");
-        }
-      }
+      const p = new Promise((resolve, reject) => {
+        const writeStream = fs.createWriteStream(thumbPath);
+        file.pipe(writeStream);
+        writeStream.on("finish", () => {
+          thumbnail = `${videoId}`;
+          thumbnailExt = extension;
+          resolve(null);
+        });
+        writeStream.on("error", (err) => {
+          try { fs.unlinkSync(thumbPath); } catch {}
+          reject(err);
+        });
+      });
+      uploadPromises.push(p);
     });
 
     bb.on("field", (name, val, _) => {
@@ -190,15 +204,23 @@ export async function updateVideoHandler(
       }
     });
 
-    bb.on("finish", async () => {
-      if (res.headersSent) return;
+    bb.on("close", async () => {
+      try {
+        await Promise.all(uploadPromises);
 
-      if (thumbnail !== null && thumbnailExt !== null) {
-        video.thumbnail = thumbnail;
-        video.thumbnailExt = thumbnailExt;
+        if (res.headersSent) return;
+
+        if (thumbnail !== null && thumbnailExt !== null) {
+          video.thumbnail = thumbnail;
+          video.thumbnailExt = thumbnailExt;
+        }
+        await video.save();
+        return res.status(StatusCodes.OK).send(video);
+      } catch (err: any) {
+        if (!res.headersSent) {
+          return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send("Error uploading thumbnail: " + err.message);
+        }
       }
-      await video.save();
-      return res.status(StatusCodes.OK).send(video);
     });
 
     req.pipe(bb);
@@ -249,7 +271,7 @@ export async function findVideosHandler(req: Request, res: Response) {
   }
 }
 
-export async function streamVideoHandlers(req: Request, res: Response) {
+export async function streamVideoHandler(req: Request, res: Response) {
   try {
     const { videoId } = req.params;
 
@@ -277,6 +299,10 @@ export async function streamVideoHandlers(req: Request, res: Response) {
       extension: video.extension,
     });
 
+    if (!fs.existsSync(filePath)) {
+      return res.status(StatusCodes.NOT_FOUND).send("Video file not found on disk");
+    }
+
     const fileSizeInBytes = fs.statSync(filePath).size;
 
     const chunkStart = Number(range.replace(/\D/g, ""));
@@ -292,7 +318,7 @@ export async function streamVideoHandlers(req: Request, res: Response) {
       "Accept-Ranges": "bytes",
       "Content-length": contentLength,
       "Content-Type": `video/${video.extension}`,
-      "Cross-Origin_Resource-Policy": "cross-origin",
+      "Cross-Origin-Resource-Policy": "cross-origin",
     };
 
     res.writeHead(StatusCodes.PARTIAL_CONTENT, headers);
@@ -304,75 +330,8 @@ export async function streamVideoHandlers(req: Request, res: Response) {
 
     videoStream.pipe(res);
   } catch (e: any) {
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(e.message);
-  }
-}
-
-export async function streamVideoHandler(req: Request, res: Response) {
-  try {
-    const { videoId } = req.params;
-
-    const range = req.headers.range;
-
-    if (!range) {
-      return res.status(StatusCodes.BAD_REQUEST).send("Range must be provided");
-    }
-
-    const video = await findVideo(videoId);
-
-    if (!video) {
-      return res.status(StatusCodes.NOT_FOUND).send("Video Not Found");
-    }
-
-    // Check privacy: if not published/public, only allow the owner
-    if (!video.published) {
-      const user = res.locals.user;
-      if (!user || String(video.owner) !== String(user._id)) {
-        return res.status(StatusCodes.FORBIDDEN).send("This video is private");
-      }
-    }
-
-    const { ContentLength: fileSizeInBytes } = await s3
-      .headObject({ Bucket: AWS_BUCKET_NAME || "", Key: video.s3Key })
-      .promise();
-
-    if (fileSizeInBytes === undefined) {
-      throw new Error("File size not available");
-    }
-
-    const chunkStart = Number(range.replace(/\D/g, ""));
-    const chunkEnd = Math.min(
-      chunkStart + CHUNK_SIZE_IN_BYTES,
-      fileSizeInBytes - 1
-    );
-
-    const contentLength = chunkEnd - chunkStart + 1;
-
-    const headers = {
-      "Content-Range": `bytes ${chunkStart}-${chunkEnd}/${fileSizeInBytes}`,
-      "Accept-Ranges": "bytes",
-      "Content-length": contentLength,
-      "Content-Type": `video/${video.extension}`,
-      "Cross-Origin_Resource-Policy": "cross-origin",
-    };
-
-    res.writeHead(StatusCodes.PARTIAL_CONTENT, headers);
-
-    // Stream video content from S3
-    const s3Stream = s3
-      .getObject({
-        Bucket: AWS_BUCKET_NAME || "",
-        Key: video.s3Key,
-        Range: `bytes=${chunkStart}-${chunkEnd}`,
-      })
-      .createReadStream();
-
-    s3Stream.pipe(res);
-  } catch (e: any) {
     console.error("Error streaming video:", e);
-    return res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .send("Internal Server Error");
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(e.message);
   }
 }
 
@@ -393,17 +352,18 @@ export async function streamThumbnailHandler(req: Request, res: Response) {
       }
     }
 
-    const s3Key = `thumbnails/${video.videoId}.${video.thumbnailExt}`;
-
-    const signedUrl = s3.getSignedUrl("getObject", {
-      Bucket: AWS_BUCKET_NAME || "",
-      Key: s3Key,
-      Expires: 300 // 5 minutes
+    const filePath = getImgPath({
+      thumbnail: video.videoId,
+      extension: video.thumbnailExt,
     });
 
-    return res.redirect(signedUrl);
+    if (!fs.existsSync(filePath)) {
+      return res.status(StatusCodes.NOT_FOUND).send("Thumbnail file not found on disk");
+    }
+
+    return res.sendFile(filePath);
   } catch (e: any) {
-    console.error("Error redirecting to thumbnail:", e);
+    console.error("Error sending thumbnail:", e);
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .send("Internal Server Error");
