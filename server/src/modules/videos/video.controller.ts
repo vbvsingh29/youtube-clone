@@ -6,7 +6,7 @@ import { createVideo, findVideo, findVideos } from "./video.service";
 import { StatusCodes } from "http-status-codes";
 import { Video, VideoModel } from "./video.model";
 import { UpdateVideoBody, UpdateVideoParams } from "./video.schema";
-import { ADMIN_SECRET } from "../../utils/constants";
+import { ADMIN_SECRET, ADMIN_USERNAME } from "../../utils/constants";
 
 const VIDEO_MIME_TYPES = ["video/mp4"];
 const IMG_MIME_TYPES = ["image/jpg", "image/jpeg", "image/png"];
@@ -233,11 +233,11 @@ export async function updateVideoHandler(
 export async function findVideosHandler(req: Request, res: Response) {
   try {
     const user = res.locals.user;
-    const { q, adminSecret } = req.query;
+    const { q, adminSecret, adminUsername } = req.query;
 
     let queryObj: any = {};
 
-    if (adminSecret === ADMIN_SECRET) {
+    if (adminSecret === ADMIN_SECRET && adminUsername === ADMIN_USERNAME) {
       queryObj = {};
     } else if (user) {
       // User is logged in: see public videos OR their own videos (public or private)
@@ -377,8 +377,9 @@ export async function deleteVideoHandler(req: Request, res: Response) {
   try {
     const { videoId } = req.params;
     const adminSecret = req.headers["admin-secret"] || req.query.adminSecret;
+    const adminUsername = req.headers["admin-username"] || req.query.adminUsername;
 
-    if (adminSecret !== ADMIN_SECRET) {
+    if (adminSecret !== ADMIN_SECRET || adminUsername !== ADMIN_USERNAME) {
       return res.status(StatusCodes.UNAUTHORIZED).send("Unauthorized Admin Access");
     }
 
@@ -406,8 +407,9 @@ export async function deleteVideoHandler(req: Request, res: Response) {
 export async function deleteVideosHandler(req: Request, res: Response) {
   try {
     const adminSecret = req.headers["admin-secret"] || req.query.adminSecret;
+    const adminUsername = req.headers["admin-username"] || req.query.adminUsername;
 
-    if (adminSecret !== ADMIN_SECRET) {
+    if (adminSecret !== ADMIN_SECRET || adminUsername !== ADMIN_USERNAME) {
       return res.status(StatusCodes.UNAUTHORIZED).send("Unauthorized Admin Access");
     }
 

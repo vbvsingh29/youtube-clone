@@ -7,19 +7,22 @@ import axiosInstance from "../../api/axios.config";
 import { toast } from "react-toastify";
 
 const Admin = () => {
+  const [username, setUsername] = useState("");
   const [secret, setSecret] = useState("");
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchAllVideos = async (secretKey: string) => {
+  const fetchAllVideos = async (adminUser: string, secretKey: string) => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get(`${API_ENDPOINT}/api/videos?adminSecret=${secretKey}`);
+      const response = await axiosInstance.get(
+        `${API_ENDPOINT}/api/videos?adminUsername=${encodeURIComponent(adminUser)}&adminSecret=${encodeURIComponent(secretKey)}`
+      );
       setVideos(response.data);
       setIsAuthorized(true);
     } catch (err: any) {
-      toast.error("Failed to fetch videos. Invalid Admin Secret?");
+      toast.error("Failed to fetch videos. Invalid Admin credentials?");
       setIsAuthorized(false);
     } finally {
       setLoading(false);
@@ -28,14 +31,19 @@ const Admin = () => {
 
   const handleAuthorize = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!secret.trim()) return;
-    fetchAllVideos(secret);
+    if (!username.trim() || !secret.trim()) {
+      toast.warning("Both username and secret are required");
+      return;
+    }
+    fetchAllVideos(username, secret);
   };
 
   const handleDeleteVideo = async (videoId: string) => {
     if (!window.confirm("Are you sure you want to delete this video? This cannot be undone.")) return;
     try {
-      await axiosInstance.delete(`${API_ENDPOINT}/api/videos/${videoId}?adminSecret=${secret}`);
+      await axiosInstance.delete(
+        `${API_ENDPOINT}/api/videos/${videoId}?adminUsername=${encodeURIComponent(username)}&adminSecret=${encodeURIComponent(secret)}`
+      );
       toast.success("Video deleted successfully");
       setVideos((prev) => prev.filter((v) => v.videoId !== videoId));
     } catch (err: any) {
@@ -46,7 +54,9 @@ const Admin = () => {
   const handleBulkCleanup = async () => {
     if (!window.confirm("WARNING: Are you sure you want to delete ALL videos and clean the storage directory? This is permanent.")) return;
     try {
-      await axiosInstance.delete(`${API_ENDPOINT}/api/videos?adminSecret=${secret}`);
+      await axiosInstance.delete(
+        `${API_ENDPOINT}/api/videos?adminUsername=${encodeURIComponent(username)}&adminSecret=${encodeURIComponent(secret)}`
+      );
       toast.success("All videos deleted successfully");
       setVideos([]);
     } catch (err: any) {
@@ -64,9 +74,16 @@ const Admin = () => {
         {!isAuthorized ? (
           <form onSubmit={handleAuthorize} className="max-w-md mx-auto py-8">
             <p className="text-zinc-400 text-sm text-center mb-4">
-              Please enter the Admin Secret Key to access the video directory and moderation tools.
+              Please enter the Admin Username and Secret Key to access the video directory and moderation tools.
             </p>
             <div className="flex flex-col gap-3">
+              <input
+                type="text"
+                placeholder="Enter Admin Username..."
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              />
               <input
                 type="password"
                 placeholder="Enter Admin Secret..."
@@ -91,7 +108,7 @@ const Admin = () => {
               </div>
               <div className="flex gap-3">
                 <button
-                  onClick={() => fetchAllVideos(secret)}
+                  onClick={() => fetchAllVideos(username, secret)}
                   className="flex items-center gap-1.5 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-sm transition"
                 >
                   <RefreshCw size={16} /> Refresh
