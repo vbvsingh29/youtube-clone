@@ -84,6 +84,7 @@ export function updateVideo({
   });
 }
 
-export function getVideos() {
-  return axiosInstance.get(videoBase).then((res) => res.data);
+export function getVideos(q?: string) {
+  const url = q ? `${videoBase}?q=${encodeURIComponent(q)}` : videoBase;
+  return axiosInstance.get(url).then((res) => res.data);
 }
