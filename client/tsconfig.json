@@ -4,6 +4,9 @@
     "target": "ESNext",
     "moduleResolution": "node",
     "lib": ["DOM", "ESNext"],
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   }
 }
