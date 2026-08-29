@@ -30,6 +30,9 @@ const Header = () => {
             <Link to={"/about"} className="hover:text-gray-400">
               About
             </Link>
+            <Link to={"/admin"} className="hover:text-gray-400">
+              Admin
+            </Link>
           </nav>
         </div>
 
