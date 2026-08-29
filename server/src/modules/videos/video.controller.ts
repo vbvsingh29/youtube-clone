@@ -65,11 +65,14 @@ export async function uploadVideoHandler(req: Request, res: Response) {
     });
 
     const video = await createVideo({ owner: user._id });
+    const uploadPromises: Promise<any>[] = [];
 
-    bb.on("file", async (_, file, info) => {
+    bb.on("file", (_, file, info) => {
       if (!VIDEO_MIME_TYPES.includes(info.mimeType)) {
-        await VideoModel.deleteOne({ _id: video._id });
-        return res.status(StatusCodes.BAD_REQUEST).send("Invalid File Type");
+        const p = VideoModel.deleteOne({ _id: video._id });
+        uploadPromises.push(p.then(() => { throw new Error("Invalid File Type"); }));
+        file.resume();
+        return;
       }
       const extension = info.mimeType.split("/")[1];
       const fileName = `${video.videoId}.${extension}`;
@@ -82,32 +85,41 @@ export async function uploadVideoHandler(req: Request, res: Response) {
         ContentType: info.mimeType,
       };
 
-      try {
-        await s3.upload(params).promise();
-        video.extension = extension;
-        video.s3Key = `${folderName}/${fileName}`;
-        await video.save();
-      } catch (e) {
-        console.error("Error uploading video to S3:", e);
-        await VideoModel.deleteOne({ _id: video._id });
-        if (!res.headersSent) {
-          return res
-            .status(StatusCodes.INTERNAL_SERVER_ERROR)
-            .send("Error uploading video");
+      const uploadPromise = (async () => {
+        try {
+          await s3.upload(params).promise();
+          video.extension = extension;
+          video.s3Key = `${folderName}/${fileName}`;
+          await video.save();
+        } catch (e) {
+          console.error("Error uploading video to S3:", e);
+          await VideoModel.deleteOne({ _id: video._id });
+          throw e;
         }
-      }
+      })();
+      uploadPromises.push(uploadPromise);
     });
 
-    bb.on("close", () => {
-      if (res.headersSent) return;
+    bb.on("close", async () => {
+      try {
+        if (uploadPromises.length === 0) {
+          await VideoModel.deleteOne({ _id: video._id });
+          if (!res.headersSent) {
+            return res.status(StatusCodes.BAD_REQUEST).send("No video file uploaded");
+          }
+          return;
+        }
 
-      res.writeHead(StatusCodes.CREATED, {
-        connection: "close",
-        "Content-Type": "application/json",
-      });
+        await Promise.all(uploadPromises);
 
-      res.write(JSON.stringify(video));
-      res.end();
+        if (res.headersSent) return;
+
+        res.status(StatusCodes.CREATED).json(video);
+      } catch (err: any) {
+        if (!res.headersSent) {
+          res.status(StatusCodes.INTERNAL_SERVER_ERROR).send("Error uploading video: " + err.message);
+        }
+      }
     });
 
     return req.pipe(bb);
