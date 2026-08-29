@@ -53,8 +53,15 @@ app.use("/api/users", userRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/videos", videoRoute);
 
+import mongoose from "mongoose";
+
 app.get("/healthcheck", (req: Request, res: Response) => {
-  res.status(StatusCodes.OK).send("I am up");
+  const dbConnected = mongoose.connection.readyState === 1;
+  if (dbConnected) {
+    res.status(StatusCodes.OK).json({ status: "healthy", database: "connected" });
+  } else {
+    res.status(StatusCodes.SERVICE_UNAVAILABLE).json({ status: "unhealthy", database: "disconnected" });
+  }
 });
 
 const server = app.listen(PORT, async () => {

@@ -4,18 +4,18 @@ A full-stack, secure video streaming clone of YouTube. Users can register accoun
 
 ---
 
-## 🛠️ Key Enhancements & Showcase Features
+## Key Enhancements & Showcase Features
 
-*   **🔒 Hardened S3 Security:** Frontend client is completely decoupled from S3 keys. Temporary signatures are handled entirely on the backend server (`/api/videos/:videoId/thumbnail`), preventing raw credential exposure in client browser bundles.
-*   **🛡️ Cost Protection & S3 Limits:** Enforces a maximum file upload size of **10MB** and restricts users to a maximum of **5 uploaded videos** to remain within free tier limits.
-*   **👁️ Video Privacy Toggles:** Unpublished videos are private; only the owner can query, view, or stream them. Published videos are public and display on the global landing page.
-*   **🔍 Title Search:** Live-filtering search bar in the header querying database fields.
+*   **Hardened S3 Security:** The frontend client is completely decoupled from S3 keys. Temporary signatures are handled entirely on the backend server (`/api/videos/:videoId/thumbnail`), preventing raw credential exposure in client browser bundles.
+*   **Cost Protection & S3 Limits:** Enforces a maximum file upload size of **10MB** and restricts users to a maximum of **5 uploaded videos** to remain within free tier limits.
+*   **Video Privacy Toggles:** Unpublished videos are private; only the owner can query, view, or stream them. Published videos are public and display on the global landing page.
+*   **Title Search:** Live-filtering search bar in the header querying database fields.
 
 ---
 
-## 🔑 Required Environment Variables (ENV Setup)
+## Required Environment Variables (ENV Setup)
 
-Create a `.env` file in **both** the `/client` and `/server` directories with the following configurations:
+Create a `.env` file in both the `/client` and `/server` directories with the following configurations:
 
 ### 1. Server Environment Variables (`/server/.env`)
 ```env
@@ -38,13 +38,13 @@ EXPIRES_IN=7d
 ```env
 REACT_APP_API_ENDPOINT=http://localhost:5000
 ```
-*(Note: Because of our security refactor, AWS keys are **no longer required** on the client side).*
+*(Note: Because of our security refactor, AWS keys are no longer required on the client side).*
 
 ---
 
-## 🚀 How to Run the Project Locally
+## How to Run the Project Locally
 
-Ensure you have **Node.js** and **Yarn** installed.
+Ensure you have Node.js and Yarn installed.
 
 ### Step 1: Run the Backend Server
 1. Navigate to the server folder:
