@@ -5,8 +5,8 @@
   "main": "src/main.ts",
   "scripts": {
     "dev": "tsnd --exit-child --transpile-only src/main.ts",
-    "build": "tsc --rootDir src --outDir dist",
-    "start": "node dist/main.js"
+    "build": "tsc",
+    "start": "node build/src/main.js"
   },
   "license": "MIT",
   "dependencies": {
