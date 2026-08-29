@@ -185,8 +185,22 @@ function UploadVideo() {
   const videos = useVideo();
 
   const handleUpload = async (acceptedFiles) => {
+    const file = acceptedFiles[0];
+    if (file && file.size > 10 * 1024 * 1024) {
+      toast.error("File size exceeds the 10MB limit for the free tier.", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        transition: Slide,
+      });
+      return;
+    }
+
     const formData = new FormData();
-    formData.append("video", acceptedFiles[0]);
+    formData.append("video", file);
     try {
       const response = await uploadVideo({
         formData,
