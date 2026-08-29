@@ -1,54 +1,77 @@
-# Full Stack Video Streaming Project
+# YouTube Clone (Full-Stack Video Streaming)
 
-This is a full stack video streaming project where users can upload and stream videos. The videos are stored on AWS S3 bucket. The project uses various technologies for both the backend and frontend.
+A full-stack, secure video streaming clone of YouTube. Users can register accounts, upload videos, search public uploads, stream videos, and manage private uploads. Videos are processed and streamed securely from AWS S3, and metadata is stored in MongoDB.
 
-## Technologies Used
+---
 
-### Backend
+## 🛠️ Key Enhancements & Showcase Features
 
-- Node.js
-- Express.js
-- TypeScript
-- MongoDB with Typegoose and Mongoose ORM
-- Helmet for security
-- Busboy for video streaming
-- Zod for schema validation
-- AWS SDK for storing videos on S3 bucket
+*   **🔒 Hardened S3 Security:** Frontend client is completely decoupled from S3 keys. Temporary signatures are handled entirely on the backend server (`/api/videos/:videoId/thumbnail`), preventing raw credential exposure in client browser bundles.
+*   **🛡️ Cost Protection & S3 Limits:** Enforces a maximum file upload size of **10MB** and restricts users to a maximum of **5 uploaded videos** to remain within free tier limits.
+*   **👁️ Video Privacy Toggles:** Unpublished videos are private; only the owner can query, view, or stream them. Published videos are public and display on the global landing page.
+*   **🔍 Title Search:** Live-filtering search bar in the header querying database fields.
 
-### Frontend
+---
 
-- React.js
-- React-Redux for managing authentication tokens
-- Redux Persistent for managing store value after refresh
+## 🔑 Required Environment Variables (ENV Setup)
 
-## Environment Variables
+Create a `.env` file in **both** the `/client` and `/server` directories with the following configurations:
 
-Make sure to set the following environment variables:
+### 1. Server Environment Variables (`/server/.env`)
+```env
+PORT=5000
+CORS_ORIGIN=http://localhost:1234
+DB_CONNECTION_STRING=mongodb://localhost:27017/youtube-clone
 
-For Server Side
+# AWS S3 Configurations
+AWS_ACCESS_KEY_ID=your_aws_access_key_id_here
+AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key_here
+AWS_REGION=your_aws_region_here (e.g., us-east-1)
+AWS_BUCKET_NAME=your_s3_bucket_name_here
 
-- `PORT`: Port number for the server
-- `CORS_ORIGIN`: CLient Side Domain
-- `DB_CONNECTION_STRING`: MongoDB connection URI
-- `AWS_ACCESS_KEY_ID`: AWS access key ID
-- `AWS_SECRET_ACCESS_KEY`: AWS secret access key
-- `AWS_REGION`: AWS Region
-- `AWS_BUCKET_NAME`: AWS S3 bucket name
-- `JWT_SECRET`: Secret key for JWT token
-- `EXPIRES_IN`: JWT expire time
+# JWT Authentication
+JWT_SECRET=your_jwt_secret_key_here
+EXPIRES_IN=7d
+```
 
-For Client Side
+### 2. Client Environment Variables (`/client/.env`)
+```env
+REACT_APP_API_ENDPOINT=http://localhost:5000
+```
+*(Note: Because of our security refactor, AWS keys are **no longer required** on the client side).*
 
-- `REACT_APP_API_ENDPOINT`: Server Side endpoint to hit APIs
-- `REACT_APP_AWS_ACCESS_KEY_ID`: AWS access key ID
-- `REACT_APP_AWS_SECRET_ACCESS_KEY`: AWS secret access key
-- `REACT_APP_AWS_REGION`: AWS region
-- `REACT_APP_AWS_BUCKET_NAME`: AWS S3 bucket name
+---
 
-## Authentication Method
+## 🚀 How to Run the Project Locally
 
-After successful login, JWT token is generated and sent to the client. Subsequent requests to protected routes require this token to be included in the headers as the `Authorization` header. The server verifies the JWT token from the headers to authenticate the user.
+Ensure you have **Node.js** and **Yarn** installed.
 
-## Redux Store and API Calls
+### Step 1: Run the Backend Server
+1. Navigate to the server folder:
+   ```bash
+   cd server
+   ```
+2. Install dependencies:
+   ```bash
+   yarn install
+   ```
+3. Start the server in development mode:
+   ```bash
+   yarn dev
+   ```
+   The backend will start listening at `http://localhost:5000`.
 
-The authentication token received upon successful login is stored in the Redux store. Any API calls that require authentication are made by including the JWT token in the headers as the `Authorization` header.
+### Step 2: Run the Frontend Client
+1. Navigate to the client folder:
+   ```bash
+   cd ../client
+   ```
+2. Install dependencies:
+   ```bash
+   yarn install
+   ```
+3. Start the bundler development server (uses Parcel):
+   ```bash
+   yarn start
+   ```
+   The frontend will open and run at `http://localhost:1234`.
