@@ -343,8 +343,19 @@ export async function streamThumbnailHandler(req: Request, res: Response) {
     const { videoId } = req.params;
     const video = await findVideo(videoId);
 
-    if (!video || !video.thumbnail || !video.thumbnailExt) {
-      return res.status(StatusCodes.NOT_FOUND).send("Thumbnail Not Found");
+    const sendDefaultPlaceholder = () => {
+      res.setHeader("Content-Type", "image/svg+xml");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      return res.send(`
+        <svg xmlns="http://www.w3.org/2055/svg" viewBox="0 0 16 9" width="100%" height="100%">
+          <rect width="100%" height="100%" fill="#27272a"/>
+          <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#71717a" font-family="sans-serif" font-size="1" font-weight="bold">No Thumbnail</text>
+        </svg>
+      `);
+    };
+
+    if (!video) {
+      return sendDefaultPlaceholder();
     }
 
     // Check privacy
@@ -355,15 +366,20 @@ export async function streamThumbnailHandler(req: Request, res: Response) {
       }
     }
 
+    if (!video.thumbnail || !video.thumbnailExt) {
+      return sendDefaultPlaceholder();
+    }
+
     const filePath = getImgPath({
       thumbnail: video.videoId,
       extension: video.thumbnailExt,
     });
 
     if (!fs.existsSync(filePath)) {
-      return res.status(StatusCodes.NOT_FOUND).send("Thumbnail file not found on disk");
+      return sendDefaultPlaceholder();
     }
 
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
     return res.sendFile(filePath);
   } catch (e: any) {
     console.error("Error sending thumbnail:", e);

@@ -20,7 +20,18 @@ export function EditVideoForm({
   videos: any;
 }) {
   const token = useSelector((state: RootState) => state.token.token);
-  const { register, handleSubmit } = useForm();
+  
+  const currentVideo = videos?.videos?.find((v: any) => v.videoId === videoId);
+
+  const { register, handleSubmit } = useForm({
+    defaultValues: {
+      title: currentVideo?.title || "",
+      description: currentVideo?.description || "",
+      published: currentVideo?.published || false,
+      sourceCode: currentVideo?.sourceCode || "",
+      thumbnail: "",
+    },
+  });
   const [thumbnail, setThumbnail] = useState<File | null>(null);
 
   const onSubmit = async (data) => {
