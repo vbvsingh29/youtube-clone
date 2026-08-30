@@ -17,7 +17,7 @@ router.patch("/:videoId", requireUser, updateVideoHandler);
 router.get("/", findVideosHandler);
 router.get("/:videoId", streamVideoHandler);
 router.get("/:videoId/thumbnail", streamThumbnailHandler);
-router.delete("/:videoId", deleteVideoHandler);
 router.delete("/", deleteVideosHandler);
+router.delete("/:videoId", deleteVideoHandler);
 
 export default router;
