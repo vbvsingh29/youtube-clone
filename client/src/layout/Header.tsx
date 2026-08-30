@@ -5,15 +5,22 @@ import UploadVideo from "../components/UploadVideo";
 import { useMe } from "../../context/me";
 import { useVideo } from "../../context/videos";
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { clearToken } from "../../store/tokenSlice";
 
 const Header = () => {
   const { user } = useMe();
   const { refetchVideos } = useVideo();
   const [searchVal, setSearchVal] = useState("");
+  const dispatch = useDispatch();
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     refetchVideos(searchVal);
+  };
+
+  const handleLogout = () => {
+    dispatch(clearToken());
   };
 
   return (
@@ -30,6 +37,11 @@ const Header = () => {
             <Link to={"/about"} className="hover:text-gray-400">
               About
             </Link>
+            {user && (
+              <Link to={"/my-videos"} className="hover:text-gray-400">
+                Your Videos
+              </Link>
+            )}
             <Link to={"/admin"} className="hover:text-gray-400">
               Admin
             </Link>
@@ -73,7 +85,20 @@ const Header = () => {
               </Link>
             </>
           )}
-          {user && <UploadVideo />}
+          {user && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-300 hidden md:inline">
+                Hello, <span className="text-white font-bold">{user.username}</span>
+              </span>
+              <UploadVideo />
+              <button
+                onClick={handleLogout}
+                className="px-3 py-1.5 text-sm rounded-md bg-red-600 hover:bg-red-750 text-white font-medium transition"
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

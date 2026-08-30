@@ -22,11 +22,15 @@ function MeContextProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function fetchUser() {
+      if (!token) {
+        setUser(null);
+        return;
+      }
       const userData = await getMe(token);
       setUser(userData);
     }
     fetchUser();
-  }, []);
+  }, [token]);
 
   return (
     <MeContext.Provider value={{ user, setUser }}>

@@ -379,6 +379,14 @@ export async function deleteVideoHandler(req: Request, res: Response) {
     const adminSecret = req.headers["admin-secret"] || req.query.adminSecret;
     const adminUsername = req.headers["admin-username"] || req.query.adminUsername;
 
+    console.log("Delete Video Attempt:", {
+      videoId,
+      receivedSecret: adminSecret,
+      expectedSecret: ADMIN_SECRET,
+      receivedUsername: adminUsername,
+      expectedUsername: ADMIN_USERNAME,
+    });
+
     if (adminSecret !== ADMIN_SECRET || adminUsername !== ADMIN_USERNAME) {
       return res.status(StatusCodes.UNAUTHORIZED).send("Unauthorized Admin Access");
     }
@@ -408,6 +416,13 @@ export async function deleteVideosHandler(req: Request, res: Response) {
   try {
     const adminSecret = req.headers["admin-secret"] || req.query.adminSecret;
     const adminUsername = req.headers["admin-username"] || req.query.adminUsername;
+
+    console.log("Bulk Cleanup Attempt:", {
+      receivedSecret: adminSecret,
+      expectedSecret: ADMIN_SECRET,
+      receivedUsername: adminUsername,
+      expectedUsername: ADMIN_USERNAME,
+    });
 
     if (adminSecret !== ADMIN_SECRET || adminUsername !== ADMIN_USERNAME) {
       return res.status(StatusCodes.UNAUTHORIZED).send("Unauthorized Admin Access");
