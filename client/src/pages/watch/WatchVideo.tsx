@@ -30,6 +30,7 @@ const WatchVideo = () => {
               src={`${API_ENDPOINT}/api/videos/${query}`}
               controls
               autoPlay
+              crossOrigin="anonymous"
               id="video-player"
             />
           </div>
